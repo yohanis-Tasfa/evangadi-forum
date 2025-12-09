@@ -33,5 +33,5 @@ function deleteQuestion(req,res){
     res.send(`Question ${questionid} deleted successfully`);
 }
 
-
+// export functions
 module.exports = {create,allQuestion,questionById,questionByUser,updateQuestion,deleteQuestion}

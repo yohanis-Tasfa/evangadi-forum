@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
+// import functions
 const {create,allQuestion,questionById,questionByUser,updateQuestion,deleteQuestion} = require("../controller/questionController")
 
 // Create new question

@@ -1,34 +1,21 @@
 const express = require('express');
 const router = express.Router();
 
+const {createAnswer,allAnswer,specificAnswer,updateAnswer,deleteAnswer} = require("../controller/answerController")
+
 // Create answer
-router.post('/create', (req, res) => {
-    // req.body: { userid, questionid, answer }
-    res.send("Answer added successfully");
-});
+router.post('/create', createAnswer);
 
 // Get all answers for a question
-router.get('/question/:questionid', (req, res) => {
-    const { questionid } = req.params;
-    res.send(`Answers for question ${questionid} fetched successfully`);
-});
+router.get('/question/:questionid',allAnswer);
 
 // Get answers of a specific user
-router.get('/user/:userid', (req, res) => {
-    const { userid } = req.params;
-    res.send(`Answers by user ${userid} fetched successfully`);
-});
+router.get('/user/:userid', specificAnswer);
 
 // Update answer
-router.put('/update/:answerid', (req, res) => {
-    const { answerid } = req.params;
-    res.send(`Answer ${answerid} updated successfully`);
-});
+router.put('/update/:answerid', updateAnswer);
 
 // Delete answer
-router.delete('/delete/:answerid', (req, res) => {
-    const { answerid } = req.params;
-    res.send(`Answer ${answerid} deleted successfully`);
-});
+router.delete('/delete/:answerid', deleteAnswer);
 
 module.exports = router;
