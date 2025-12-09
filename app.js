@@ -4,25 +4,19 @@ const app = express();
 
 const port = 5500;
 
-
-
-// register route
-
-app.post('/api/users/register',(req,res)=>{
-    res.send("user registered successfully")
+app.get('/',(req,res)=>{
+    res.send("welcome to evangadi express")
 })
 
-// login route
+// user routes middelware files
+const userRoutes = require("./routes/userRouter")
 
-app.post('/api/users/login',(req,res)=>{
-    res.send("user logged in successfully")
-})
+// user routes middelware
+app.use('/api/users',userRoutes)
 
-// check user route
+// question routes middelware??
 
-app.get('/api/users/check',(req,res)=>{
-    res.send("user is authenticated")
-})
+// avswer routes middelware??
 
 
 app.listen(port,(err)=>{
