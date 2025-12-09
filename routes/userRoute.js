@@ -1,20 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
+const {register,login,check} = require("../controller/userController")
+
 // register route
-router.post('/register',(req,res)=>{
-    res.send("user registered successfully")
-})      
+router.post('/register',register)      
 
 // login route
-router.post('/login',(req,res)=>{
-    res.send("user logged in successfully")
-})
+router.post('/login',login)
 
 // check user route
-router.get('/check',(req,res)=>{
-    res.send("user is authenticated")
-})
+router.get('/check',check)
 
 
 module.exports = router;
