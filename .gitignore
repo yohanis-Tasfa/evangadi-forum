@@ -1,0 +1,18 @@
+# Node modules
+node_modules/
+db/
+routes/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# Build folders
+dist/
+build/
+
+# Database or local files
+db/
