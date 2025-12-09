@@ -1,39 +1,24 @@
 const express = require('express');
 const router = express.Router();
 
+const {create,allQuestion,questionById,questionByUser,updateQuestion,deleteQuestion} = require("../controller/questionController")
+
 // Create new question
-router.post('/create', (req, res) => {
-    
-    res.send("Question created successfully");
-});
+router.post('/create', create);
 
 // Fetch all questions
-router.get('/all', (req, res) => {
-    res.send("All questions fetched successfully");
-});
+router.get('/all', allQuestion);
 
 // Fetch a question by questionid
-router.get('/:questionid', (req, res) => {
-    const { questionid } = req.params;
-    res.send(`Question ${questionid} fetched successfully`);
-});
+router.get('/:questionid',questionById);
 
 // Fetch all questions posted by a specific user
-router.get('/user/:userid', (req, res) => {
-    const { userid } = req.params;
-    res.send(`Questions for user ${userid} fetched successfully`);
-});
+router.get('/user/:userid', questionByUser);
 
 // Update question
-router.put('/update/:questionid', (req, res) => {
-    const { questionid } = req.params;
-    res.send(`Question ${questionid} updated successfully`);
-});
+router.put('/update/:questionid', updateQuestion);
 
 // Delete question
-router.delete('/delete/:questionid', (req, res) => {
-    const { questionid } = req.params;
-    res.send(`Question ${questionid} deleted successfully`);
-});
+router.delete('/delete/:questionid', deleteQuestion);
 
 module.exports = router;
