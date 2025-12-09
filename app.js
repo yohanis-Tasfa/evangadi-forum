@@ -9,12 +9,14 @@ app.get('/',(req,res)=>{
 })
 
 // user routes middelware files
-const userRoutes = require("./routes/userRouter")
+const userRoutes = require("./routes/userRoute")
+const questionRoutes = require("./routes/questionRoute")
 
 // user routes middelware
 app.use('/api/users',userRoutes)
 
 // question routes middelware??
+app.use('/questions',questionRoutes)
 
 // avswer routes middelware??
 
