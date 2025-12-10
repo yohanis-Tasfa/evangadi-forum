@@ -4,14 +4,14 @@ const app = express();
 
 const port = 5500;
 
-app.get('/',(req,res)=>{
-    res.send("welcome to evangadi express")
-})
+// import db conection
+const dbconnection = require("./db/dbconfig")
 
 // user,question,answer routes middelware files
 const userRoutes = require("./routes/userRoute")
 const questionRoutes = require("./routes/questionRoute")
 const answerRoutes = require("./routes/answerRoute")
+
 
 
 // user routes middelware
@@ -21,15 +21,21 @@ app.use('/api/users',userRoutes)
 app.use('/question',questionRoutes)
 
 // avswer routes middelware??
-
 app.use('/answer',answerRoutes)
 
 
-
-app.listen(port,(err)=>{
-    if(err){
-        console.log(err.msg)
-    }else{
-        console.log(`server is running on port ${port}`)
+async function start(){
+    try {
+        const result = await dbconnection.execute("select 'test'")
+        app.listen(port)
+        console.log("database connectio established")
+        console.log(`listening on port ${port}`)
+        // console.log(result)
+    } catch (error) {
+        console.log(error.message)
     }
-})
+}
+start()
+
+
+
