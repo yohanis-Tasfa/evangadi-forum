@@ -12,7 +12,8 @@ const userRoutes = require("./routes/userRoute")
 const questionRoutes = require("./routes/questionRoute")
 const answerRoutes = require("./routes/answerRoute")
 
-
+// json middleware to extract json data
+app.use(express.json())
 
 // user routes middelware
 app.use('/api/users',userRoutes)
