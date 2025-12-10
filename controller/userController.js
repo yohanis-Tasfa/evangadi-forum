@@ -1,6 +1,9 @@
 // import db conection
 const dbconnection = require("../db/dbconfig")
 
+// import bcrypt after install
+const bcrypt = require("bcrypt")
+
 
 async function register(req,res){
     const {username,firstname,lastname,email,password} =req.body;
@@ -17,9 +20,13 @@ async function register(req,res){
         if(password.length<8){
             return res.status(400).json({msg:"password must be at least 8 character"})
         }
+
+        // encrypt password
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassword = await bcrypt.hash(password,salt)
          
         // insert data to db
-        await dbconnection.query("INSERT INTO users (username,firstname,lastname,email,password) VALUES (?,?,?,?,?)",[username,firstname,lastname,email,password])
+        await dbconnection.query("INSERT INTO users (username,firstname,lastname,email,password) VALUES (?,?,?,?,?)",[username,firstname,lastname,email,hashedPassword])
         return res.status(201).json({msg:"user registered successfully"})
 
     } catch (error) {
