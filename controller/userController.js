@@ -4,7 +4,7 @@ const dbconnection = require("../db/dbconfig")
 // import bcrypt after install
 const bcrypt = require("bcrypt")
 
-
+// REGISTER
 async function register(req,res){
     const {username,firstname,lastname,email,password} =req.body;
     if (!email || !password || !firstname || !lastname || !username) {
@@ -35,8 +35,34 @@ async function register(req,res){
     }
 }
 
+
+// LOGIN 
 async function login(req,res){
-    res.send("user logged in successfully")
+   const {email,password} = req.body || {};
+   if(!email || !password){
+    return res.status(401).json({msg:"please enter all required filled"})
+   }
+
+   try {
+    // fetch user data using email if useer exist
+    const [user] = await dbconnection.query("select username,userid,password from users where email=?",[email])
+    if(user.length==0){
+        return res.status(401).json({msg:"invalid credential"})
+    }
+    return res.json({user}) // return user
+    
+    // compare password
+    const isMatch = await bcrypt.compare(password,user[0].password)
+    if (!isMatch){
+        return res.status(401).json({msg:"invalid credential"})
+    }
+    
+    // return res.json({user:user[0].password}) // return password only
+
+   } catch (error) {
+        console.log(error.message)
+        return res.status(500).json({msg:"something went wrong try again!"})
+   }
 }
 
 async function check(req,res){
