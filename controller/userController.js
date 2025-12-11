@@ -3,6 +3,8 @@ const dbconnection = require("../db/dbconfig")
 
 // import bcrypt after install
 const bcrypt = require("bcrypt")
+// import token
+const jwt = require("jsonwebtoken")
 
 // REGISTER
 async function register(req,res){
@@ -40,24 +42,33 @@ async function register(req,res){
 async function login(req,res){
    const {email,password} = req.body || {};
    if(!email || !password){
-    return res.status(401).json({msg:"please enter all required filled"})
+    return res.status(400).json({msg:"please enter all required filled"})
    }
 
    try {
     // fetch user data using email if useer exist
     const [user] = await dbconnection.query("select username,userid,password from users where email=?",[email])
     if(user.length==0){
-        return res.status(401).json({msg:"invalid credential"})
+        return res.status(400).json({msg:"invalid credential"})
     }
-    return res.json({user}) // return user
+    // return res.json({user}) // return user
     
     // compare password
     const isMatch = await bcrypt.compare(password,user[0].password)
     if (!isMatch){
-        return res.status(401).json({msg:"invalid credential"})
+        return res.status(400).json({msg:"invalid credential"})
     }
+        // return res.json({user:user[0].password}) // return password only
+
+    // token part
+
+    const username = user[0].username;
+    const userid = user[0].userid;
+    const token = jwt.sign({username,userid},"secret",{expiresIn:"1d"})
+
+    return res.status(200).json({msg:"user login successfully",token})
     
-    // return res.json({user:user[0].password}) // return password only
+
 
    } catch (error) {
         console.log(error.message)
