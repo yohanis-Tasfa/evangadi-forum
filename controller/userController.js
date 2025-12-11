@@ -76,7 +76,14 @@ async function login(req,res){
    }
 }
 
+// CHECK USER
+
 async function check(req,res){
+
+   const username = req.user.username;
+   const userid = req.user.userid;
+
+    res.status(201).json({msg:"valid user",username,userid})
     res.send("user is authenticated")
 }
 

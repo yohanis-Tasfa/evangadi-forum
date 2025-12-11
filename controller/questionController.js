@@ -1,13 +1,47 @@
 // function  Create new question
-function create(req,res){
-    
-    res.send("Question created successfully");
-}
+const { v4: uuidv4 } = require("uuid");
+// import db connection
+// const dbconnection = require("../db/dbconfig");
 
-// function Fetch all questions
-function allQuestion(req,res){
-    res.send("All questions fetched successfully");
-}
+
+// // CREATE QUESTION
+// async function create(req, res) {
+//   const { title, description, tag } = req.body;
+//   const userid = req.user.userid;
+
+//   if (!title || !description) {
+//     return res.status(400).json({ msg: "Title and description required" });
+//   }
+
+//   const questionid = uuidv4(); // create unique ID
+
+//   try {
+//     await dbconnection.query(
+//       "INSERT INTO question (questionid, userid, title, description, tag) VALUES (?, ?, ?, ?, ?)",
+//       [questionid, userid, title, description, tag]
+//     );
+
+//     res.status(201).json({ msg: "Question created", questionid });
+//   } catch (error) {
+//     console.log(error.message);
+//     res.status(500).json({ msg: "Error creating question" });
+//   }
+// }
+
+
+// // function Fetch all questions
+// async function allQuestion(req, res) {
+//   try {
+//     const [rows] = await dbconnection.query(
+//       "SELECT * FROM question ORDER BY questionid "
+//     );
+//     res.status(200).json({ msg: "All questions fetched", data: rows });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ msg: "Error fetching questions" });
+//   }
+// }
+
 
 // function Fetch a question by questionid
 function questionById(req,res){
