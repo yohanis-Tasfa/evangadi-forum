@@ -4,6 +4,8 @@ const app = express();
 
 const port = 5500;
 
+require('dotenv').config()
+
 // import db conection
 const dbconnection = require("./db/dbconfig")
 
