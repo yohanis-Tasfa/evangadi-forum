@@ -28,7 +28,6 @@ function Register() {
       !firstnameValue ||
       !lastnameValue ||
       !emailValue ||
-      !emailValue ||
       !passwordValue
     ) {
       alert("please provide all requiered information");
