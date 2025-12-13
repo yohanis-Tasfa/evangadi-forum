@@ -39,7 +39,7 @@ function Register() {
       await axios.post("/users/register", {
         username: usernameValue,
         firstname: firstnameValue,
-        lastaname: lastnameValue,
+        lastname: lastnameValue,
         email: emailValue,
         password: passwordValue,
       });
