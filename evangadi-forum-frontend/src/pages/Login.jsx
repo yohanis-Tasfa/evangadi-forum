@@ -1,6 +1,6 @@
 import { useRef } from "react"; // used to catch userinput
 import axios from "../axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Login() {
   const navigate = useNavigate();
@@ -24,11 +24,13 @@ function Login() {
 
     // send request by axios
     try {
-      await axios.post("/users/login", {
+      const { data } = await axios.post("/users/login", {
         email: emailValue,
         password: passwordValue,
       });
       alert("loggedin successfully.");
+      localStorage.setItem("token", data.token);
+
       navigate("/");
     } catch (error) {
       alert("something went wrong");
@@ -43,6 +45,12 @@ function Login() {
         className="w-full max-w-md bg-white p-6 rounded-xl shadow-md space-y-4"
       >
         <h2 className="text-2xl font-semibold text-center mb-4">login</h2>
+        <h2 className="text-xl font-semibold text-center mb-4">
+          Don't have an account?
+          <Link className="text-orange-500 ml-1" to={"/register"}>
+            create account
+          </Link>
+        </h2>
 
         <div>
           <input

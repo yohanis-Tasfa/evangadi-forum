@@ -1,6 +1,6 @@
 import { useRef } from "react"; // used to catch userinput
 import axios from "../axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Register() {
   const navigate = useNavigate();
@@ -58,6 +58,12 @@ function Register() {
         className="w-full max-w-md bg-white p-6 rounded-xl shadow-md space-y-4"
       >
         <h2 className="text-2xl font-semibold text-center mb-4">Register</h2>
+        <h2 className="text-xl font-semibold text-center mb-4">
+          Already have an account?
+          <Link className="text-orange-500 ml-1" to={"/login"}>
+            login in
+          </Link>
+        </h2>
 
         <div>
           <input
