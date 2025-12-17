@@ -6,7 +6,11 @@ const dbconnection = require("../db/dbconfig");
 // CREATE QUESTION
 async function create(req, res) {
   const { title, description, tag } = req.body;
-  const userid = req.user.userid;
+  const userid = req.user && req.user.userid;
+
+  if (!userid) {
+    return res.status(401).json({ msg: "invalid authentication" });
+  }
 
   if (!title || !description) {
     return res.status(400).json({ msg: "Title and description required" });
@@ -17,13 +21,22 @@ async function create(req, res) {
   try {
     await dbconnection.query(
       "INSERT INTO question (questionid, userid, title, description, tag) VALUES (?, ?, ?, ?, ?)",
-      [questionid, userid, title, description, tag]
+      [questionid, userid, title, description, tag || null]
     );
 
     res.status(201).json({ msg: "Question created", questionid });
   } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ msg: "Error creating question" });
+    console.log("[question.create] db error:", {
+      message: error && error.message,
+      code: error && error.code,
+      errno: error && error.errno,
+      sqlState: error && error.sqlState,
+      sqlMessage: error && error.sqlMessage,
+    });
+    res.status(500).json({
+      msg: "Error creating question",
+      error: error && error.message ? error.message : "unknown error",
+    });
   }
 }
 
