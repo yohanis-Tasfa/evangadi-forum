@@ -13,19 +13,19 @@ function Header() {
   }
 
   return (
-    <header className="w-full bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <header className="w-full sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* LOGO */}
-        <Link to="/" className="text-2xl font-bold">
+        <Link to="/" className="text-xl sm:text-2xl font-bold tracking-tight">
           <span className="text-gray-900">EVAN</span>
           <span className="text-orange-500">GADI</span>
         </Link>
 
         {/* NAV */}
-        <nav className="flex items-center gap-8">
+        <nav className="flex items-center gap-2 sm:gap-6">
           <Link
             to="/home"
-            className="text-gray-700 hover:text-orange-500 transition"
+            className="px-3 py-2 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition"
           >
             Home
           </Link>
@@ -34,40 +34,35 @@ function Header() {
             <>
               <Link
                 to="/my-questions"
-                className="text-gray-700 hover:text-orange-500 transition"
+                className="px-3 py-2 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition"
               >
                 My Questions
               </Link>
               <Link
                 to="/my-answers"
-                className="text-gray-700 hover:text-orange-500 transition"
+                className="px-3 py-2 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition"
               >
                 My Answers
               </Link>
             </>
           )}
 
-          {/* <a
-            href="#how-it-works"
-            className="text-gray-700 hover:text-orange-500 transition"
-          >
-            How it Works
-          </a> */}
+          <div className="w-px h-6 bg-gray-200 hidden sm:block" />
 
           {user ? (
             <button
               type="button"
               onClick={handleLogout}
-              className="bg-red-600 text-white px-6 py-2 rounded-full font-medium hover:bg-red-700 transition"
+              className="bg-gray-900 text-white px-4 sm:px-5 py-2 rounded-lg font-medium hover:bg-black transition"
             >
               Logout
             </button>
           ) : (
             <Link
               to="/login"
-              className="bg-[#2d2f6f] text-white px-6 py-2 rounded-full font-medium hover:opacity-90 transition"
+              className="bg-blue-600 text-white px-4 sm:px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
             >
-              SIGN IN
+              Sign in
             </Link>
           )}
         </nav>
