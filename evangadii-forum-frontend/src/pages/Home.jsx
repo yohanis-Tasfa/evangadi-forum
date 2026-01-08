@@ -56,7 +56,8 @@ function Home() {
                 {firstname ? `Hi, ${firstname}` : "Hi"}
               </h1>
               <p className="text-gray-600 mt-2 max-w-2xl">
-                Ask a question, help others, and learn faster with the community.
+                Ask a question, help others, and learn faster with the
+                community.
               </p>
             </div>
 
@@ -82,7 +83,8 @@ function Home() {
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Questions</h2>
             <p className="text-sm text-gray-500">
-              {questions.length} {questions.length === 1 ? "question" : "questions"}
+              {questions.length}{" "}
+              {questions.length === 1 ? "question" : "questions"}
             </p>
           </div>
         </div>
