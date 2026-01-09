@@ -43,9 +43,9 @@ async function create(req, res) {
 // function Fetch all questions
 async function allQuestion(req, res) {
   try {
-    // Join question with the user table to get the username
+    // Join question with the user table to get the username and firstname
     const [rows] = await dbconnection.query(
-      `SELECT q.*, u.username FROM question q 
+      `SELECT q.*, u.username, u.firstname FROM question q 
       JOIN users u ON q.userid = u.userid
       ORDER BY q.id DESC`
     );
