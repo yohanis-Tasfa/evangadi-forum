@@ -6,11 +6,30 @@ import { useNavigate } from "react-router-dom";
 function Home() {
   const { user } = useContext(AppState);
   const [questions, setQuestions] = useState([]);
+  const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const navigate = useNavigate();
 
   const firstname = user?.firstname || "";
+
+  // Filter questions based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredQuestions(questions);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = questions.filter(
+        (q) =>
+          q.title?.toLowerCase().includes(query) ||
+          q.description?.toLowerCase().includes(query) ||
+          q.tag?.toLowerCase().includes(query) ||
+          q.username?.toLowerCase().includes(query)
+      );
+      setFilteredQuestions(filtered);
+    }
+  }, [searchQuery, questions]);
 
   function getInitials(text) {
     const t = (text || "").trim();
@@ -76,6 +95,34 @@ function Home() {
               </button>
             </div>
           </div>
+
+          {/* SEARCH BAR */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search questions by title, description, tag, or author..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* LIST HEADER */}
@@ -83,8 +130,16 @@ function Home() {
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Questions</h2>
             <p className="text-sm text-gray-500">
-              {questions.length}{" "}
-              {questions.length === 1 ? "question" : "questions"}
+              {searchQuery ? (
+                <>
+                  {filteredQuestions.length} of {questions.length} questions
+                  {filteredQuestions.length === 0 && " match your search"}
+                </>
+              ) : (
+                <>
+                  {questions.length} {questions.length === 1 ? "question" : "questions"}
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -100,22 +155,39 @@ function Home() {
           <div className="bg-white border border-gray-100 rounded-xl p-6 text-gray-600">
             Loading questions...
           </div>
-        ) : questions.length === 0 ? (
+        ) : filteredQuestions.length === 0 ? (
           <div className="bg-white border border-gray-100 rounded-xl p-8 text-center">
-            <p className="text-gray-900 font-medium">No questions yet</p>
-            <p className="text-gray-500 text-sm mt-1">
-              Be the first to ask something.
-            </p>
-            <button
-              onClick={() => navigate("/question")}
-              className="mt-4 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              Ask your first question
-            </button>
+            {searchQuery ? (
+              <>
+                <p className="text-gray-900 font-medium">No questions found</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Try a different search term or clear the search.
+                </p>
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="mt-4 bg-gray-100 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-200 transition"
+                >
+                  Clear search
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-900 font-medium">No questions yet</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Be the first to ask something.
+                </p>
+                <button
+                  onClick={() => navigate("/question")}
+                  className="mt-4 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
+                >
+                  Ask your first question
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-            {questions.map((q) => (
+            {filteredQuestions.map((q) => (
               <button
                 type="button"
                 key={q.questionid}
