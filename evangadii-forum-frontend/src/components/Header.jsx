@@ -53,7 +53,7 @@ function Header() {
         <div className="hidden md:flex items-center gap-4 ml-auto">
           {user && (
             <span className="text-gray-400 text-sm">
-              Welcome, <span className="text-orange-400 font-medium">{user.username}</span>
+              Welcome, <span className="text-orange-400 font-medium">{user.firstname}</span>
             </span>
           )}
           {user ? (
