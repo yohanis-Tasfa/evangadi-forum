@@ -132,7 +132,7 @@ function Home() {
                       {q.title}
                     </p>
                     <p className="text-sm text-gray-500 truncate">
-                      Asked by {q.username}
+                      Asked by {q.firstname}
                     </p>
                   </div>
                 </div>
