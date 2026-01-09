@@ -1,13 +1,16 @@
 const mysql2 = require('mysql2');
 
 const dbconnection = mysql2.createPool({
-    host: process.env.DB_HOST || 'metro.proxy.rlwy.net',
-    port: process.env.DB_PORT || 44640,
-    user: process.env.DB_USER || 'root',
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 4000,
+    user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'railway',
+    database: process.env.DB_NAME,
     connectionLimit: 10,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: true
+    }
 })
 
 
