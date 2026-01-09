@@ -43,7 +43,7 @@ function Register({ onSwitch }) {
         password,
       });
 
-      // alert("Registered successfully. Please login.");
+      
       navigate("/login");
 
       if (onSwitch) {
