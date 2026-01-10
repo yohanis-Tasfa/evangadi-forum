@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useMemo } from "react";
 import { AppState } from "../AppState";
 import axios from "../axios";
 import { useNavigate } from "react-router-dom";
@@ -6,30 +6,64 @@ import { useNavigate } from "react-router-dom";
 function Home() {
   const { user } = useContext(AppState);
   const [questions, setQuestions] = useState([]);
-  const [filteredQuestions, setFilteredQuestions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [filterTag, setFilterTag] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const navigate = useNavigate();
 
   const firstname = user?.firstname || "";
 
-  // Filter questions based on search query
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredQuestions(questions);
-    } else {
+  // Get unique tags from questions
+  const allTags = useMemo(() => {
+    const tags = questions
+      .map((q) => q.tag)
+      .filter((tag) => tag && tag.trim());
+    return [...new Set(tags)].sort();
+  }, [questions]);
+
+  // Filter and sort questions
+  const filteredQuestions = useMemo(() => {
+    let result = [...questions];
+
+    // Search filter
+    if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      const filtered = questions.filter(
+      result = result.filter(
         (q) =>
           q.title?.toLowerCase().includes(query) ||
           q.description?.toLowerCase().includes(query) ||
           q.tag?.toLowerCase().includes(query) ||
           q.username?.toLowerCase().includes(query)
       );
-      setFilteredQuestions(filtered);
     }
-  }, [searchQuery, questions]);
+
+    // Tag filter
+    if (filterTag) {
+      result = result.filter((q) => q.tag === filterTag);
+    }
+
+    // Sort
+    switch (sortBy) {
+      case "newest":
+        result.sort((a, b) => (b.id || 0) - (a.id || 0));
+        break;
+      case "oldest":
+        result.sort((a, b) => (a.id || 0) - (b.id || 0));
+        break;
+      case "most-answers":
+        result.sort((a, b) => (b.answerCount || 0) - (a.answerCount || 0));
+        break;
+      case "unanswered":
+        result = result.filter((q) => (q.answerCount || 0) === 0);
+        break;
+      default:
+        break;
+    }
+
+    return result;
+  }, [questions, searchQuery, filterTag, sortBy]);
 
   function getInitials(text) {
     const t = (text || "").trim();
@@ -125,15 +159,15 @@ function Home() {
           </div>
         </div>
 
-        {/* LIST HEADER */}
-        <div className="flex items-end justify-between mb-4">
+        {/* LIST HEADER WITH SORT & FILTER */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Questions</h2>
             <p className="text-sm text-gray-500">
-              {searchQuery ? (
+              {searchQuery || filterTag ? (
                 <>
                   {filteredQuestions.length} of {questions.length} questions
-                  {filteredQuestions.length === 0 && " match your search"}
+                  {filteredQuestions.length === 0 && " match your filters"}
                 </>
               ) : (
                 <>
@@ -141,6 +175,62 @@ function Home() {
                 </>
               )}
             </p>
+          </div>
+
+          {/* Sort & Filter Controls */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Tag Filter */}
+            <div className="relative">
+              <select
+                value={filterTag}
+                onChange={(e) => setFilterTag(e.target.value)}
+                className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+              >
+                <option value="">All Tags</option>
+                {allTags.map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+              >
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="most-answers">Most Answers</option>
+                <option value="unanswered">Unanswered</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Clear Filters */}
+            {(filterTag || searchQuery) && (
+              <button
+                onClick={() => {
+                  setFilterTag("");
+                  setSearchQuery("");
+                }}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         </div>
 
@@ -157,17 +247,21 @@ function Home() {
           </div>
         ) : filteredQuestions.length === 0 ? (
           <div className="bg-white border border-gray-100 rounded-xl p-8 text-center">
-            {searchQuery ? (
+            {searchQuery || filterTag ? (
               <>
                 <p className="text-gray-900 font-medium">No questions found</p>
                 <p className="text-gray-500 text-sm mt-1">
-                  Try a different search term or clear the search.
+                  Try different filters or clear them.
                 </p>
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterTag("");
+                    setSortBy("newest");
+                  }}
                   className="mt-4 bg-gray-100 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-200 transition"
                 >
-                  Clear search
+                  Clear all filters
                 </button>
               </>
             ) : (
