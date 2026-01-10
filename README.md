@@ -163,3 +163,65 @@ ISC
 ## 👥 Author
 
 Evangadi Networks
+
+
+
+
+Evangadi Forum - Enhanced Requirements
+Core Features (Current)
+✅ User registration & login ✅ Ask questions ✅ Answer questions ✅ Search questions ✅ Filter by tags ✅ Sort (newest, most answers, unanswered)
+
+New Features to Add
+1. AI-Powered Answers
+"Generate AI Answer" button on each question
+AI suggests answer based on question context
+Users can edit AI answer before posting
+Mark AI-generated answers with badge
+Rate AI answers (helpful/not helpful)
+2. Voting System
+Upvote/downvote questions
+Upvote/downvote answers
+Sort by most votes
+Reputation points for users
+3. Accept Best Answer
+Question owner can mark best answer ✓
+Accepted answer shows at top with green checkmark
+Reputation bonus for accepted answers
+4. User Profiles
+Profile page with avatar
+Bio/about section
+Stats (questions asked, answers given, reputation)
+Activity history
+Edit profile settings
+5. Rich Text Editor
+Code syntax highlighting
+Markdown support
+Image upload in answers
+Code blocks with language detection
+6. Notifications
+New answer on your question
+Your answer was accepted
+Someone upvoted your post
+Real-time notifications (bell icon)
+7. Comments
+Comment on questions
+Comment on answers
+Threaded discussions
+8. Bookmarks/Save
+Save questions for later
+"My Saved" page
+9. Related Questions
+Show similar questions when asking
+"Related Questions" sidebar
+10. Dark Mode
+Toggle dark/light theme
+Save preference
+Priority Order (Recommended)
+Phase 1 - High Impact:
+
+AI-Powered Answers (unique feature!)
+Voting System
+Accept Best Answer
+Phase 2 - User Experience: 4. User Profiles 5. Rich Text Editor 6. Dark Mode
+
+Phase 3 - Engagement: 7. Notifications 8. Comments 9. Bookmarks 10. Related Questions

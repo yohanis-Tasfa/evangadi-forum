@@ -16,6 +16,7 @@ function QuestionDetail() {
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editingAnswerText, setEditingAnswerText] = useState("");
 
+
   const { user } = useContext(AppState);
 
   const token = localStorage.getItem("token");
@@ -337,7 +338,7 @@ function QuestionDetail() {
             )}
           </div>
 
-          {/* OWNER ACTIONS */}
+          {/* OWNER ACTIONS  */}
           {user && user.userid === question.userid && !isEditing && (
             <div className="flex flex-col gap-2">
               <button
