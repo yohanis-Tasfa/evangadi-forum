@@ -43,11 +43,13 @@ async function create(req, res) {
 // function Fetch all questions
 async function allQuestion(req, res) {
   try {
-    // Join question with the user table to get the username and firstname
+    // Join question with the user table and count answers
     const [rows] = await dbconnection.query(
-      `SELECT q.*, u.username, u.firstname FROM question q 
-      JOIN users u ON q.userid = u.userid
-      ORDER BY q.id DESC`
+      `SELECT q.*, u.username, u.firstname,
+       (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount
+       FROM question q 
+       JOIN users u ON q.userid = u.userid
+       ORDER BY q.id DESC`
     );
 
     res.status(200).json({ msg: "All questions fetched", data: rows });

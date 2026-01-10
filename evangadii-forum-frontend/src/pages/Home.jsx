@@ -186,31 +186,74 @@ function Home() {
             )}
           </div>
         ) : (
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+          <div className="space-y-4">
             {filteredQuestions.map((q) => (
-              <button
-                type="button"
+              <div
                 key={q.questionid}
                 onClick={() => navigate(`/question/${q.questionid}`)}
-                className="w-full text-left flex items-center justify-between gap-4 px-5 sm:px-6 py-4 border-b last:border-b-0 border-gray-100 hover:bg-gray-50 transition"
+                className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:border-gray-200 transition cursor-pointer overflow-hidden"
               >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 font-semibold shrink-0">
-                    {getInitials(q.username || firstname)}
-                  </div>
+                <div className="p-5 sm:p-6">
+                  <div className="flex gap-4">
+                    {/* Stats Column */}
+                    <div className="hidden sm:flex flex-col items-center gap-2 min-w-[70px]">
+                      <div className={`text-center px-3 py-2 rounded-lg ${
+                        (q.answerCount || 0) > 0 
+                          ? 'bg-green-50 border border-green-200' 
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}>
+                        <p className={`text-lg font-semibold ${
+                          (q.answerCount || 0) > 0 ? 'text-green-600' : 'text-gray-600'
+                        }`}>
+                          {q.answerCount || 0}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {(q.answerCount || 0) === 1 ? 'answer' : 'answers'}
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
-                      {q.title}
-                    </p>
-                    <p className="text-sm text-gray-500 truncate">
-                      Asked by {q.firstname}
-                    </p>
+                    {/* Content Column */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-lg hover:text-blue-600 transition line-clamp-2">
+                        {q.title}
+                      </h3>
+                      
+                      {q.description && (
+                        <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                          {q.description}
+                        </p>
+                      )}
+
+                      {/* Tags & Meta */}
+                      <div className="flex flex-wrap items-center gap-3 mt-3">
+                        {q.tag && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                            {q.tag}
+                          </span>
+                        )}
+                        
+                        {/* Mobile answer count */}
+                        <span className="sm:hidden inline-flex items-center gap-1 text-xs text-gray-500">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                          </svg>
+                          {q.answerCount || 0} answers
+                        </span>
+
+                        <div className="flex items-center gap-2 ml-auto">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
+                            {getInitials(q.username || q.firstname)}
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {q.firstname || q.username}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <span className="text-gray-300 text-2xl leading-none">›</span>
-              </button>
+              </div>
             ))}
           </div>
         )}
