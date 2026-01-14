@@ -43,10 +43,11 @@ async function create(req, res) {
 // function Fetch all questions
 async function allQuestion(req, res) {
   try {
-    // Join question with the user table and count answers
+    // Join question with the user table and count answers and votes
     const [rows] = await dbconnection.query(
       `SELECT q.*, u.username, u.firstname,
-       (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount
+       (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount,
+       (SELECT COALESCE(SUM(vote_type), 0) FROM votes v WHERE v.questionid = q.questionid) as voteCount
        FROM question q 
        JOIN users u ON q.userid = u.userid
        ORDER BY q.id DESC`

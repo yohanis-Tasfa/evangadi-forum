@@ -15,9 +15,101 @@ function QuestionDetail() {
   const [editTag, setEditTag] = useState("");
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editingAnswerText, setEditingAnswerText] = useState("");
-
+  const [questionVotes, setQuestionVotes] = useState({ voteCount: 0, userVote: 0 });
+  const [answerVotes, setAnswerVotes] = useState({});
 
   const { user } = useContext(AppState);
+
+  const token = localStorage.getItem("token");
+
+  // 🔹 Vote on question
+  async function handleQuestionVote(voteType) {
+    try {
+      await axios.post(
+        `/vote/question/${questionid}`,
+        { vote_type: voteType },
+        { headers: { Authorization: "Bearer " + token } }
+      );
+      fetchQuestionVotes();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // 🔹 Vote on answer
+  async function handleAnswerVote(answerid, voteType) {
+    try {
+      await axios.post(
+        `/vote/answer/${answerid}`,
+        { vote_type: voteType },
+        { headers: { Authorization: "Bearer " + token } }
+      );
+      fetchAnswerVotes(answerid);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // 🔹 Fetch question votes
+  async function fetchQuestionVotes() {
+    try {
+      const { data } = await axios.get(`/vote/question/${questionid}`, {
+        headers: { Authorization: "Bearer " + token },
+      });
+      setQuestionVotes(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // 🔹 Fetch answer votes
+  async function fetchAnswerVotes(answerid) {
+    try {
+      const { data } = await axios.get(`/vote/answer/${answerid}`, {
+        headers: { Authorization: "Bearer " + token },
+      });
+      setAnswerVotes((prev) => ({ ...prev, [answerid]: data }));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // Vote button component
+  function VoteButtons({ voteCount, userVote, onUpvote, onDownvote }) {
+    return (
+      <div className="flex flex-col items-center gap-1 mr-4">
+        <button
+          onClick={onUpvote}
+          className={`p-2 rounded-lg transition ${
+            userVote === 1
+              ? "bg-green-100 text-green-600"
+              : "hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+          }`}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+        <span className={`text-lg font-semibold ${
+          voteCount > 0 ? "text-green-600" : voteCount < 0 ? "text-red-600" : "text-gray-600"
+        }`}>
+          {voteCount}
+        </span>
+        <button
+          onClick={onDownvote}
+          className={`p-2 rounded-lg transition ${
+            userVote === -1
+              ? "bg-red-100 text-red-600"
+              : "hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+          }`}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
 
   const token = localStorage.getItem("token");
 
@@ -258,7 +350,17 @@ function QuestionDetail() {
   useEffect(() => {
     fetchQuestion();
     fetchAnswers();
+    fetchQuestionVotes();
   }, [questionid]);
+
+  // Fetch votes for all answers when answers change
+  useEffect(() => {
+    answers.forEach((ans) => {
+      if (ans.answerid && !answerVotes[ans.answerid]) {
+        fetchAnswerVotes(ans.answerid);
+      }
+    });
+  }, [answers]);
 
   if (!question) {
     return <p className="text-center mt-10">Loading...</p>;
@@ -268,9 +370,19 @@ function QuestionDetail() {
     <section className="min-h-screen bg-gray-50 px-6 py-8">
       <div className="max-w-4xl mx-auto bg-white p-6 rounded-md shadow">
         {/* QUESTION */}
-        <div className="flex justify-between items-start gap-4 mb-4">
+        <div className="flex gap-4 mb-4">
+          {/* Vote buttons for question */}
+          <VoteButtons
+            voteCount={questionVotes.voteCount}
+            userVote={questionVotes.userVote}
+            onUpvote={() => handleQuestionVote(1)}
+            onDownvote={() => handleQuestionVote(-1)}
+          />
+
           <div className="flex-1">
-            {isEditing ? (
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex-1">
+                {isEditing ? (
               <form onSubmit={handleUpdateQuestion} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -355,6 +467,8 @@ function QuestionDetail() {
               </button>
             </div>
           )}
+            </div>
+          </div>
         </div>
 
         {!isEditing && (
@@ -375,9 +489,18 @@ function QuestionDetail() {
             {answers.map((ans) => (
               <div
                 key={ans.answerid}
-                className="border rounded-md p-4 bg-gray-50"
+                className="border rounded-md p-4 bg-gray-50 flex gap-4"
               >
-                {editingAnswerId === ans.answerid ? (
+                {/* Vote buttons for answer */}
+                <VoteButtons
+                  voteCount={answerVotes[ans.answerid]?.voteCount || 0}
+                  userVote={answerVotes[ans.answerid]?.userVote || 0}
+                  onUpvote={() => handleAnswerVote(ans.answerid, 1)}
+                  onDownvote={() => handleAnswerVote(ans.answerid, -1)}
+                />
+
+                <div className="flex-1">
+                  {editingAnswerId === ans.answerid ? (
                   <form onSubmit={handleUpdateAnswer} className="space-y-3">
                     <textarea
                       value={editingAnswerText}
@@ -427,6 +550,7 @@ function QuestionDetail() {
                     )}
                   </>
                 )}
+                </div>
               </div>
             ))}
           </div>

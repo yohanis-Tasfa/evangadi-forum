@@ -55,6 +55,9 @@ function Home() {
       case "most-answers":
         result.sort((a, b) => (b.answerCount || 0) - (a.answerCount || 0));
         break;
+      case "most-votes":
+        result.sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
+        break;
       case "unanswered":
         result = result.filter((q) => (q.answerCount || 0) === 0);
         break;
@@ -209,6 +212,7 @@ function Home() {
               >
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
+                <option value="most-votes">Most Votes</option>
                 <option value="most-answers">Most Answers</option>
                 <option value="unanswered">Unanswered</option>
               </select>
@@ -291,6 +295,22 @@ function Home() {
                   <div className="flex gap-4">
                     {/* Stats Column */}
                     <div className="hidden sm:flex flex-col items-center gap-2 min-w-[70px]">
+                      {/* Vote count */}
+                      <div className={`text-center px-3 py-2 rounded-lg ${
+                        (q.voteCount || 0) > 0 
+                          ? 'bg-orange-50 border border-orange-200' 
+                          : (q.voteCount || 0) < 0
+                          ? 'bg-red-50 border border-red-200'
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}>
+                        <p className={`text-lg font-semibold ${
+                          (q.voteCount || 0) > 0 ? 'text-orange-600' : (q.voteCount || 0) < 0 ? 'text-red-600' : 'text-gray-600'
+                        }`}>
+                          {q.voteCount || 0}
+                        </p>
+                        <p className="text-xs text-gray-500">votes</p>
+                      </div>
+                      {/* Answer count */}
                       <div className={`text-center px-3 py-2 rounded-lg ${
                         (q.answerCount || 0) > 0 
                           ? 'bg-green-50 border border-green-200' 
@@ -327,7 +347,13 @@ function Home() {
                           </span>
                         )}
                         
-                        {/* Mobile answer count */}
+                        {/* Mobile stats */}
+                        <span className="sm:hidden inline-flex items-center gap-1 text-xs text-gray-500">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                          {q.voteCount || 0} votes
+                        </span>
                         <span className="sm:hidden inline-flex items-center gap-1 text-xs text-gray-500">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
