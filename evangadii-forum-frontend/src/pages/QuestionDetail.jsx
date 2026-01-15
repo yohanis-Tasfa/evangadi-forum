@@ -111,7 +111,7 @@ function QuestionDetail() {
     );
   }
 
-  const token = localStorage.getItem("token");
+  
 
   // 🔹 Fetch question
   async function fetchQuestion() {
