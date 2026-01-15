@@ -43,15 +43,32 @@ async function create(req, res) {
 // function Fetch all questions
 async function allQuestion(req, res) {
   try {
-    // Join question with the user table and count answers and votes
-    const [rows] = await dbconnection.query(
-      `SELECT q.*, u.username, u.firstname,
-       (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount,
-       (SELECT COALESCE(SUM(vote_type), 0) FROM votes v WHERE v.questionid = q.questionid) as voteCount
-       FROM question q 
-       JOIN users u ON q.userid = u.userid
-       ORDER BY q.id DESC`
-    );
+    // Join question with the user table and count answers
+    // Try with votes, if votes table doesn't exist, use 0
+    let rows;
+    try {
+      const [result] = await dbconnection.query(
+        `SELECT q.*, u.username, u.firstname,
+         (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount,
+         (SELECT COALESCE(SUM(vote_type), 0) FROM votes v WHERE v.questionid = q.questionid) as voteCount
+         FROM question q 
+         JOIN users u ON q.userid = u.userid
+         ORDER BY q.id DESC`
+      );
+      rows = result;
+    } catch (voteError) {
+      // If votes table doesn't exist, fetch without votes
+      console.log("Votes table not found, fetching without votes");
+      const [result] = await dbconnection.query(
+        `SELECT q.*, u.username, u.firstname,
+         (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount,
+         0 as voteCount
+         FROM question q 
+         JOIN users u ON q.userid = u.userid
+         ORDER BY q.id DESC`
+      );
+      rows = result;
+    }
 
     res.status(200).json({ msg: "All questions fetched", data: rows });
   } catch (error) {
