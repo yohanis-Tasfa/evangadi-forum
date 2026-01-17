@@ -52,9 +52,14 @@ function Header() {
         {/* Auth Button - Right */}
         <div className="hidden md:flex items-center gap-4 ml-auto">
           {user && (
-            <span className="text-gray-400 text-sm">
-              Welcome, <span className="text-orange-400 font-medium">{user.firstname}</span>
-            </span>
+            <div className="flex items-center gap-3">
+              <Link
+                to={`/profile/${user.userid}`}
+                className="text-gray-400 text-sm hover:text-orange-400 transition"
+              >
+                Welcome, <span className="text-orange-400 font-medium">{user.firstname}</span>
+              </Link>
+            </div>
           )}
           {user ? (
             <button

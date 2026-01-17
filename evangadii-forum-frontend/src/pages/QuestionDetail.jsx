@@ -1,10 +1,11 @@
 import { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "../axios";
 import { AppState } from "../AppState";
 
 function QuestionDetail() {
   const { questionid } = useParams();
+  const navigate = useNavigate();
 
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
@@ -528,7 +529,15 @@ function QuestionDetail() {
                   <>
                     <p className="text-gray-800">{ans.answer}</p>
                     <p className="text-sm text-gray-500 mt-2">
-                      Answered by <strong>{ans.username}</strong>
+                      Answered by <strong 
+                        className="text-blue-600 hover:text-blue-800 cursor-pointer transition"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/profile/${ans.userid}`);
+                        }}
+                      >
+                        {ans.username}
+                      </strong>
                     </p>
                     {user && user.userid === ans.userid && (
                       <div className="flex gap-3 mt-3">

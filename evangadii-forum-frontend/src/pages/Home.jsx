@@ -365,7 +365,13 @@ function Home() {
                           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
                             {getInitials(q.username || q.firstname)}
                           </div>
-                          <span className="text-sm text-gray-500">
+                          <span 
+                            className="text-sm text-gray-500 hover:text-blue-600 cursor-pointer transition"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/profile/${q.userid}`);
+                            }}
+                          >
                             {q.firstname || q.username}
                           </span>
                         </div>

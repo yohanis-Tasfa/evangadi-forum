@@ -44,6 +44,7 @@ const userRoutes = require("./routes/userRoute");
 const questionRoutes = require("./routes/questionRoute");
 const answerRoutes = require("./routes/answerRoute");
 const voteRoutes = require("./routes/voteRoute");
+const profileRoutes = require("./routes/profileRoute");
 
 // json middleware to extract json data
 app.use(express.json());
@@ -59,6 +60,9 @@ app.use("/api/answer", answerRoutes);
 
 // vote routes middleware
 app.use("/api/vote", voteRoutes);
+
+// profile routes middleware
+app.use("/api/profile", profileRoutes);
 
 async function start() {
   app.listen(port, '0.0.0.0', () => {

@@ -13,6 +13,7 @@ import AskQuestion from "./pages/AskQuestion";
 import QuestionDetail from "./pages/QuestionDetail";
 import MyQuestions from "./pages/MyQuestions";
 import MyAnswers from "./pages/MyAnswers";
+import UserProfile from "./pages/UserProfile";
 import { AppState } from "./AppState";
 
 function App() {
@@ -87,6 +88,10 @@ function App() {
         <Route
           path="/question/:questionid"
           element={user ? <QuestionDetail /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/profile/:userid"
+          element={user ? <UserProfile /> : <Navigate to="/login" />}
         />
 
         {/* FALLBACK */}
