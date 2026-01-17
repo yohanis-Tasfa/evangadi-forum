@@ -61,7 +61,13 @@ function UserProfile() {
       fetchProfile(); // Refresh profile data
     } catch (error) {
       console.error("Error updating profile:", error);
-      setError("Failed to update profile");
+      
+      // Handle specific error messages
+      if (error.response?.data?.msg?.includes("Profile fields not available")) {
+        setError("Profile editing is not available yet. The database needs to be updated.");
+      } else {
+        setError("Failed to update profile");
+      }
     }
   }
 
@@ -137,6 +143,7 @@ function UserProfile() {
                   <button
                     onClick={() => setIsEditing(!isEditing)}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                    title={!user.bio && !user.location && !user.website ? "Profile editing requires database update" : ""}
                   >
                     {isEditing ? "Cancel" : "Edit Profile"}
                   </button>

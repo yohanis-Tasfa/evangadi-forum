@@ -9,17 +9,33 @@ async function getUserProfile(req, res) {
   }
 
   try {
-    // Get user basic info
-    const [userResult] = await dbconnection.query(
-      "SELECT userid, username, firstname, lastname, email, created_at FROM users WHERE userid = ?",
-      [userid]
-    );
+    // Get user basic info - handle missing profile columns gracefully
+    let userQuery = "SELECT userid, username, firstname, lastname, email, created_at";
+    
+    // Try to include profile fields if they exist
+    try {
+      await dbconnection.query("SELECT bio FROM users LIMIT 1");
+      userQuery += ", bio, location, website";
+    } catch (columnError) {
+      console.log("Profile columns not found, using basic user info only");
+    }
+    
+    userQuery += " FROM users WHERE userid = ?";
+    
+    const [userResult] = await dbconnection.query(userQuery, [userid]);
 
     if (userResult.length === 0) {
       return res.status(404).json({ msg: "User not found" });
     }
 
     const user = userResult[0];
+    
+    // Ensure profile fields exist (set to null if columns don't exist)
+    if (!user.hasOwnProperty('bio')) {
+      user.bio = null;
+      user.location = null;
+      user.website = null;
+    }
 
     // Get user statistics
     const [questionStats] = await dbconnection.query(
@@ -113,14 +129,24 @@ async function updateUserProfile(req, res) {
   const userid = req.user.userid;
 
   try {
-    // For now, we'll add these fields to the users table
-    // In a real app, you might create a separate user_profiles table
-    await dbconnection.query(
-      "UPDATE users SET bio = ?, location = ?, website = ? WHERE userid = ?",
-      [bio || null, location || null, website || null, userid]
-    );
-
-    res.status(200).json({ msg: "Profile updated successfully" });
+    // Check if profile columns exist before trying to update
+    try {
+      await dbconnection.query("SELECT bio FROM users LIMIT 1");
+      
+      // Profile columns exist, proceed with update
+      await dbconnection.query(
+        "UPDATE users SET bio = ?, location = ?, website = ? WHERE userid = ?",
+        [bio || null, location || null, website || null, userid]
+      );
+      
+      res.status(200).json({ msg: "Profile updated successfully" });
+    } catch (columnError) {
+      // Profile columns don't exist
+      res.status(400).json({ 
+        msg: "Profile fields not available. Database needs to be updated with profile columns.",
+        note: "Contact administrator to run database migration."
+      });
+    }
   } catch (error) {
     console.error("Error updating profile:", error);
     res.status(500).json({ msg: "Error updating profile" });
@@ -132,17 +158,33 @@ async function getMyProfile(req, res) {
   const userid = req.user.userid;
   
   try {
-    // Get user info including private fields
-    const [userResult] = await dbconnection.query(
-      "SELECT userid, username, firstname, lastname, email, bio, location, website, created_at FROM users WHERE userid = ?",
-      [userid]
-    );
+    // Get user info including private fields - handle missing profile columns gracefully
+    let userQuery = "SELECT userid, username, firstname, lastname, email, created_at";
+    
+    // Try to include profile fields if they exist
+    try {
+      await dbconnection.query("SELECT bio FROM users LIMIT 1");
+      userQuery += ", bio, location, website";
+    } catch (columnError) {
+      console.log("Profile columns not found, using basic user info only");
+    }
+    
+    userQuery += " FROM users WHERE userid = ?";
+    
+    const [userResult] = await dbconnection.query(userQuery, [userid]);
 
     if (userResult.length === 0) {
       return res.status(404).json({ msg: "User not found" });
     }
 
     const user = userResult[0];
+    
+    // Ensure profile fields exist (set to null if columns don't exist)
+    if (!user.hasOwnProperty('bio')) {
+      user.bio = null;
+      user.location = null;
+      user.website = null;
+    }
 
     // Get statistics (same as public profile)
     const [questionStats] = await dbconnection.query(
