@@ -4,52 +4,60 @@ const dbconnection = require("../db/dbconfig");
 async function getUserProfile(req, res) {
   const { userid } = req.params;
   
+  console.log("[getUserProfile] Request for userid:", userid);
+  
   if (!userid) {
     return res.status(400).json({ msg: "User ID is required" });
   }
 
   try {
-    // Get user basic info - handle missing profile columns gracefully
-    let userQuery = "SELECT userid, username, firstname, lastname, email, created_at";
-    
-    // Try to include profile fields if they exist
-    try {
-      await dbconnection.query("SELECT bio FROM users LIMIT 1");
-      userQuery += ", bio, location, website";
-    } catch (columnError) {
-      console.log("Profile columns not found, using basic user info only");
-    }
-    
-    userQuery += " FROM users WHERE userid = ?";
-    
-    const [userResult] = await dbconnection.query(userQuery, [userid]);
+    // Start with basic user info query
+    const [userResult] = await dbconnection.query(
+      "SELECT userid, username, firstname, lastname, email, created_at FROM users WHERE userid = ?",
+      [userid]
+    );
 
     if (userResult.length === 0) {
+      console.log("[getUserProfile] User not found:", userid);
       return res.status(404).json({ msg: "User not found" });
     }
 
     const user = userResult[0];
+    console.log("[getUserProfile] Found user:", user.username);
     
-    // Ensure profile fields exist (set to null if columns don't exist)
-    if (!user.hasOwnProperty('bio')) {
-      user.bio = null;
-      user.location = null;
-      user.website = null;
+    // Set default profile fields (will be null until migration is applied)
+    user.bio = null;
+    user.location = null;
+    user.website = null;
+
+    // Get user statistics with error handling
+    let totalQuestions = 0;
+    let totalAnswers = 0;
+    let votesReceived = 0;
+
+    try {
+      const [questionStats] = await dbconnection.query(
+        "SELECT COUNT(*) as totalQuestions FROM question WHERE userid = ?",
+        [userid]
+      );
+      totalQuestions = questionStats[0]?.totalQuestions || 0;
+      console.log("[getUserProfile] Questions:", totalQuestions);
+    } catch (error) {
+      console.log("[getUserProfile] Error fetching question stats:", error.message);
     }
 
-    // Get user statistics
-    const [questionStats] = await dbconnection.query(
-      "SELECT COUNT(*) as totalQuestions FROM question WHERE userid = ?",
-      [userid]
-    );
+    try {
+      const [answerStats] = await dbconnection.query(
+        "SELECT COUNT(*) as totalAnswers FROM answer WHERE userid = ?",
+        [userid]
+      );
+      totalAnswers = answerStats[0]?.totalAnswers || 0;
+      console.log("[getUserProfile] Answers:", totalAnswers);
+    } catch (error) {
+      console.log("[getUserProfile] Error fetching answer stats:", error.message);
+    }
 
-    const [answerStats] = await dbconnection.query(
-      "SELECT COUNT(*) as totalAnswers FROM answer WHERE userid = ?",
-      [userid]
-    );
-
-    // Get vote statistics (votes received on user's content)
-    let votesReceived = 0;
+    // Get vote statistics (votes received on user's content) - handle missing votes table
     try {
       const [questionVotes] = await dbconnection.query(
         `SELECT COALESCE(SUM(v.vote_type), 0) as questionVotes 
@@ -68,35 +76,48 @@ async function getUserProfile(req, res) {
       );
 
       votesReceived = (questionVotes[0]?.questionVotes || 0) + (answerVotes[0]?.answerVotes || 0);
+      console.log("[getUserProfile] Votes received:", votesReceived);
     } catch (voteError) {
-      console.log("Votes table not found, setting votes to 0");
+      console.log("[getUserProfile] Votes table not found or error:", voteError.message);
       votesReceived = 0;
     }
 
     // Calculate basic reputation (simple formula for now)
-    const reputation = Math.max(1, votesReceived * 10 + questionStats[0].totalQuestions * 2 + answerStats[0].totalAnswers * 5);
+    const reputation = Math.max(1, votesReceived * 10 + totalQuestions * 2 + totalAnswers * 5);
 
-    // Get recent questions (last 5)
-    const [recentQuestions] = await dbconnection.query(
-      `SELECT questionid, title, created_at,
-       (SELECT COUNT(*) FROM answer WHERE questionid = question.questionid) as answerCount
-       FROM question 
-       WHERE userid = ? 
-       ORDER BY created_at DESC 
-       LIMIT 5`,
-      [userid]
-    );
+    // Get recent questions (last 5) with error handling
+    let recentQuestions = [];
+    try {
+      const [questions] = await dbconnection.query(
+        `SELECT questionid, title, created_at,
+         (SELECT COUNT(*) FROM answer WHERE questionid = question.questionid) as answerCount
+         FROM question 
+         WHERE userid = ? 
+         ORDER BY created_at DESC 
+         LIMIT 5`,
+        [userid]
+      );
+      recentQuestions = questions || [];
+    } catch (error) {
+      console.log("[getUserProfile] Error fetching recent questions:", error.message);
+    }
 
-    // Get recent answers (last 5)
-    const [recentAnswers] = await dbconnection.query(
-      `SELECT a.answerid, a.answer, a.created_at, q.title as questionTitle, q.questionid
-       FROM answer a
-       JOIN question q ON a.questionid = q.questionid
-       WHERE a.userid = ?
-       ORDER BY a.created_at DESC
-       LIMIT 5`,
-      [userid]
-    );
+    // Get recent answers (last 5) with error handling
+    let recentAnswers = [];
+    try {
+      const [answers] = await dbconnection.query(
+        `SELECT a.answerid, a.answer, a.created_at, q.title as questionTitle, q.questionid
+         FROM answer a
+         JOIN question q ON a.questionid = q.questionid
+         WHERE a.userid = ?
+         ORDER BY a.created_at DESC
+         LIMIT 5`,
+        [userid]
+      );
+      recentAnswers = answers || [];
+    } catch (error) {
+      console.log("[getUserProfile] Error fetching recent answers:", error.message);
+    }
 
     const profile = {
       user: {
@@ -104,8 +125,8 @@ async function getUserProfile(req, res) {
         joinedDate: user.created_at
       },
       stats: {
-        totalQuestions: questionStats[0].totalQuestions,
-        totalAnswers: answerStats[0].totalAnswers,
+        totalQuestions: totalQuestions,
+        totalAnswers: totalAnswers,
         reputation: reputation,
         votesReceived: votesReceived
       },
@@ -115,11 +136,15 @@ async function getUserProfile(req, res) {
       }
     };
 
+    console.log("[getUserProfile] Profile created successfully for:", user.username);
     res.status(200).json({ msg: "Profile fetched successfully", profile });
 
   } catch (error) {
-    console.error("Error fetching user profile:", error);
-    res.status(500).json({ msg: "Error fetching user profile" });
+    console.error("[getUserProfile] Error fetching user profile:", error);
+    res.status(500).json({ 
+      msg: "Error fetching user profile",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 }
 
@@ -157,21 +182,14 @@ async function updateUserProfile(req, res) {
 async function getMyProfile(req, res) {
   const userid = req.user.userid;
   
+  console.log("[getMyProfile] Request for userid:", userid);
+  
   try {
-    // Get user info including private fields - handle missing profile columns gracefully
-    let userQuery = "SELECT userid, username, firstname, lastname, email, created_at";
-    
-    // Try to include profile fields if they exist
-    try {
-      await dbconnection.query("SELECT bio FROM users LIMIT 1");
-      userQuery += ", bio, location, website";
-    } catch (columnError) {
-      console.log("Profile columns not found, using basic user info only");
-    }
-    
-    userQuery += " FROM users WHERE userid = ?";
-    
-    const [userResult] = await dbconnection.query(userQuery, [userid]);
+    // Get user info - start with basic fields
+    const [userResult] = await dbconnection.query(
+      "SELECT userid, username, firstname, lastname, email, created_at FROM users WHERE userid = ?",
+      [userid]
+    );
 
     if (userResult.length === 0) {
       return res.status(404).json({ msg: "User not found" });
@@ -179,25 +197,36 @@ async function getMyProfile(req, res) {
 
     const user = userResult[0];
     
-    // Ensure profile fields exist (set to null if columns don't exist)
-    if (!user.hasOwnProperty('bio')) {
-      user.bio = null;
-      user.location = null;
-      user.website = null;
-    }
+    // Set default profile fields (will be null until migration is applied)
+    user.bio = null;
+    user.location = null;
+    user.website = null;
 
     // Get statistics (same as public profile)
-    const [questionStats] = await dbconnection.query(
-      "SELECT COUNT(*) as totalQuestions FROM question WHERE userid = ?",
-      [userid]
-    );
-
-    const [answerStats] = await dbconnection.query(
-      "SELECT COUNT(*) as totalAnswers FROM answer WHERE userid = ?",
-      [userid]
-    );
-
+    let totalQuestions = 0;
+    let totalAnswers = 0;
     let votesReceived = 0;
+
+    try {
+      const [questionStats] = await dbconnection.query(
+        "SELECT COUNT(*) as totalQuestions FROM question WHERE userid = ?",
+        [userid]
+      );
+      totalQuestions = questionStats[0]?.totalQuestions || 0;
+    } catch (error) {
+      console.log("[getMyProfile] Error fetching question stats:", error.message);
+    }
+
+    try {
+      const [answerStats] = await dbconnection.query(
+        "SELECT COUNT(*) as totalAnswers FROM answer WHERE userid = ?",
+        [userid]
+      );
+      totalAnswers = answerStats[0]?.totalAnswers || 0;
+    } catch (error) {
+      console.log("[getMyProfile] Error fetching answer stats:", error.message);
+    }
+
     try {
       const [questionVotes] = await dbconnection.query(
         `SELECT COALESCE(SUM(v.vote_type), 0) as questionVotes 
@@ -217,10 +246,11 @@ async function getMyProfile(req, res) {
 
       votesReceived = (questionVotes[0]?.questionVotes || 0) + (answerVotes[0]?.answerVotes || 0);
     } catch (voteError) {
+      console.log("[getMyProfile] Votes table not found:", voteError.message);
       votesReceived = 0;
     }
 
-    const reputation = Math.max(1, votesReceived * 10 + questionStats[0].totalQuestions * 2 + answerStats[0].totalAnswers * 5);
+    const reputation = Math.max(1, votesReceived * 10 + totalQuestions * 2 + totalAnswers * 5);
 
     const profile = {
       user: {
@@ -228,18 +258,22 @@ async function getMyProfile(req, res) {
         joinedDate: user.created_at
       },
       stats: {
-        totalQuestions: questionStats[0].totalQuestions,
-        totalAnswers: answerStats[0].totalAnswers,
+        totalQuestions: totalQuestions,
+        totalAnswers: totalAnswers,
         reputation: reputation,
         votesReceived: votesReceived
       }
     };
 
+    console.log("[getMyProfile] Profile created successfully for:", user.username);
     res.status(200).json({ msg: "My profile fetched successfully", profile });
 
   } catch (error) {
-    console.error("Error fetching my profile:", error);
-    res.status(500).json({ msg: "Error fetching profile" });
+    console.error("[getMyProfile] Error fetching my profile:", error);
+    res.status(500).json({ 
+      msg: "Error fetching profile",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 }
 

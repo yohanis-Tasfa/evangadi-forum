@@ -64,6 +64,17 @@ app.use("/api/vote", voteRoutes);
 // profile routes middleware
 app.use("/api/profile", profileRoutes);
 
+console.log("✅ Profile routes registered at /api/profile");
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ 
+    msg: "Server is running", 
+    timestamp: new Date().toISOString(),
+    routes: ["users", "question", "answer", "vote", "profile"]
+  });
+});
+
 async function start() {
   app.listen(port, '0.0.0.0', () => {
     console.log(`Server listening on port ${port}`);
