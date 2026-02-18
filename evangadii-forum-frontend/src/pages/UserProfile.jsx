@@ -244,7 +244,7 @@ function UserProfile() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <div className="text-3xl font-bold text-blue-600 mb-2">{stats.reputation}</div>
             <div className="text-gray-600">Reputation</div>
@@ -263,6 +263,11 @@ function UserProfile() {
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <div className="text-3xl font-bold text-orange-600 mb-2">{stats.votesReceived}</div>
             <div className="text-gray-600">Votes Received</div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="text-3xl font-bold text-emerald-600 mb-2">{stats.acceptedAnswers || 0}</div>
+            <div className="text-gray-600">Accepted Answers</div>
           </div>
         </div>
 

@@ -10,6 +10,8 @@ const {
   specificAnswer,
   updateAnswer,
   deleteAnswer,
+  acceptAnswer,
+  unacceptAnswer,
 } = require("../controller/answerController");
 
 // Create answer
@@ -26,6 +28,12 @@ router.put("/update/:answerid", authmiddleware, updateAnswer);
 
 // Delete answer
 router.delete("/delete/:answerid", authmiddleware, deleteAnswer);
+
+// Accept answer (mark as best answer)
+router.post("/accept/:answerid", authmiddleware, acceptAnswer);
+
+// Unaccept answer (remove accepted status)
+router.post("/unaccept/:answerid", authmiddleware, unacceptAnswer);
 
 module.exports = router;
 

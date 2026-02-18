@@ -66,19 +66,30 @@ async function allAnswer(req, res) {
   const { questionid } = req.params;
 
   try {
-    // Join with users table to include username.
-    // NOTE: don't assume `created_at` exists on the table (some schemas omit it).
-    const [answers] = await dbconnection.query(
-      `SELECT a.*, u.username FROM answer a
+    // Join with users table to include username and handle is_accepted column gracefully
+    let query = `SELECT a.*, u.username`;
+    
+    // Try to include is_accepted field if it exists
+    try {
+      await dbconnection.query("SELECT is_accepted FROM answer LIMIT 1");
+      query += `, COALESCE(a.is_accepted, 0) as is_accepted`;
+    } catch (columnError) {
+      console.log("[allAnswer] is_accepted column not found, using default value 0");
+      query += `, 0 as is_accepted`;
+    }
+    
+    query += ` FROM answer a
        JOIN users u ON a.userid = u.userid
-       WHERE a.questionid = ?`,
-      [questionid]
-    );
+       WHERE a.questionid = ?
+       ORDER BY is_accepted DESC, a.created_at DESC`;
 
+    const [answers] = await dbconnection.query(query, [questionid]);
+
+    console.log(`[allAnswer] Found ${answers.length} answers for question ${questionid}`);
     res.status(200).json({ answers });
   } catch (error) {
     console.log(
-      "Error in allAnswer:",
+      "[allAnswer] Error:",
       error && error.message ? error.message : error
     );
     res.status(500).json({ msg: "Error fetching answers" });
@@ -164,11 +175,132 @@ async function deleteAnswer(req, res) {
   }
 }
 
+// ACCEPT ANSWER (mark as best answer)
+async function acceptAnswer(req, res) {
+  const { answerid } = req.params;
+  const userid = req.user.userid;
+
+  console.log("[acceptAnswer] Request to accept answer:", answerid, "by user:", userid);
+
+  try {
+    // First, get the answer and verify it exists
+    const [answerResult] = await dbconnection.query(
+      "SELECT a.*, q.userid as question_owner FROM answer a JOIN question q ON a.questionid = q.questionid WHERE a.answerid = ?",
+      [answerid]
+    );
+
+    if (answerResult.length === 0) {
+      return res.status(404).json({ msg: "Answer not found" });
+    }
+
+    const answer = answerResult[0];
+    
+    // Check if the current user is the question owner
+    if (answer.question_owner !== userid) {
+      return res.status(403).json({ msg: "Only the question owner can accept answers" });
+    }
+
+    // Check if there's already an accepted answer for this question
+    const [existingAccepted] = await dbconnection.query(
+      "SELECT answerid FROM answer WHERE questionid = ? AND is_accepted = 1",
+      [answer.questionid]
+    );
+
+    // If there's already an accepted answer, unaccept it first
+    if (existingAccepted.length > 0) {
+      await dbconnection.query(
+        "UPDATE answer SET is_accepted = 0 WHERE questionid = ?",
+        [answer.questionid]
+      );
+      console.log("[acceptAnswer] Removed previous accepted answer");
+    }
+
+    // Accept the new answer
+    await dbconnection.query(
+      "UPDATE answer SET is_accepted = 1 WHERE answerid = ?",
+      [answerid]
+    );
+
+    console.log("[acceptAnswer] Answer accepted successfully");
+    res.status(200).json({ msg: "Answer accepted successfully" });
+
+  } catch (error) {
+    console.error("[acceptAnswer] Error:", error);
+    
+    // Handle case where is_accepted column doesn't exist
+    if (error.code === 'ER_BAD_FIELD_ERROR' && error.sqlMessage?.includes('is_accepted')) {
+      return res.status(400).json({ 
+        msg: "Accept answer feature not available. Database needs to be updated.",
+        note: "Contact administrator to run database migration for accept answer feature."
+      });
+    }
+    
+    res.status(500).json({ 
+      msg: "Error accepting answer",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+}
+
+// UNACCEPT ANSWER (remove accepted status)
+async function unacceptAnswer(req, res) {
+  const { answerid } = req.params;
+  const userid = req.user.userid;
+
+  console.log("[unacceptAnswer] Request to unaccept answer:", answerid, "by user:", userid);
+
+  try {
+    // Get the answer and verify it exists and is accepted
+    const [answerResult] = await dbconnection.query(
+      "SELECT a.*, q.userid as question_owner FROM answer a JOIN question q ON a.questionid = q.questionid WHERE a.answerid = ? AND a.is_accepted = 1",
+      [answerid]
+    );
+
+    if (answerResult.length === 0) {
+      return res.status(404).json({ msg: "Accepted answer not found" });
+    }
+
+    const answer = answerResult[0];
+    
+    // Check if the current user is the question owner
+    if (answer.question_owner !== userid) {
+      return res.status(403).json({ msg: "Only the question owner can unaccept answers" });
+    }
+
+    // Unaccept the answer
+    await dbconnection.query(
+      "UPDATE answer SET is_accepted = 0 WHERE answerid = ?",
+      [answerid]
+    );
+
+    console.log("[unacceptAnswer] Answer unaccepted successfully");
+    res.status(200).json({ msg: "Answer unaccepted successfully" });
+
+  } catch (error) {
+    console.error("[unacceptAnswer] Error:", error);
+    
+    // Handle case where is_accepted column doesn't exist
+    if (error.code === 'ER_BAD_FIELD_ERROR' && error.sqlMessage?.includes('is_accepted')) {
+      return res.status(400).json({ 
+        msg: "Accept answer feature not available. Database needs to be updated.",
+        note: "Contact administrator to run database migration for accept answer feature."
+      });
+    }
+    
+    res.status(500).json({ 
+      msg: "Error unaccepting answer",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+}
+
 module.exports = {
   createAnswer,
   allAnswer,
   specificAnswer,
   updateAnswer,
   deleteAnswer,
+  acceptAnswer,
+  unacceptAnswer,
 };
 

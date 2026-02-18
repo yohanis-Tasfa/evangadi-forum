@@ -44,30 +44,48 @@ async function create(req, res) {
 async function allQuestion(req, res) {
   try {
     // Join question with the user table and count answers
-    // Try with votes, if votes table doesn't exist, use 0
+    // Try with votes and accepted answers, if tables don't exist, use defaults
     let rows;
     try {
       const [result] = await dbconnection.query(
         `SELECT q.*, u.username, u.firstname,
          (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount,
-         (SELECT COALESCE(SUM(vote_type), 0) FROM votes v WHERE v.questionid = q.questionid) as voteCount
+         (SELECT COALESCE(SUM(vote_type), 0) FROM votes v WHERE v.questionid = q.questionid) as voteCount,
+         (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid AND a.is_accepted = 1) as acceptedAnswerCount
          FROM question q 
          JOIN users u ON q.userid = u.userid
          ORDER BY q.id DESC`
       );
       rows = result;
     } catch (voteError) {
-      // If votes table doesn't exist, fetch without votes
-      console.log("Votes table not found, fetching without votes");
-      const [result] = await dbconnection.query(
-        `SELECT q.*, u.username, u.firstname,
-         (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount,
-         0 as voteCount
-         FROM question q 
-         JOIN users u ON q.userid = u.userid
-         ORDER BY q.id DESC`
-      );
-      rows = result;
+      // If votes or is_accepted columns don't exist, fetch without them
+      console.log("Votes or is_accepted columns not found, fetching basic data");
+      try {
+        const [result] = await dbconnection.query(
+          `SELECT q.*, u.username, u.firstname,
+           (SELECT COUNT(*) FROM answer a WHERE a.questionid = q.questionid) as answerCount,
+           0 as voteCount,
+           0 as acceptedAnswerCount
+           FROM question q 
+           JOIN users u ON q.userid = u.userid
+           ORDER BY q.id DESC`
+        );
+        rows = result;
+      } catch (basicError) {
+        // Fallback to most basic query
+        const [result] = await dbconnection.query(
+          `SELECT q.*, u.username, u.firstname
+           FROM question q 
+           JOIN users u ON q.userid = u.userid
+           ORDER BY q.id DESC`
+        );
+        rows = result.map(row => ({
+          ...row,
+          answerCount: 0,
+          voteCount: 0,
+          acceptedAnswerCount: 0
+        }));
+      }
     }
 
     res.status(200).json({ msg: "All questions fetched", data: rows });

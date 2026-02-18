@@ -82,8 +82,27 @@ async function getUserProfile(req, res) {
       votesReceived = 0;
     }
 
-    // Calculate basic reputation (simple formula for now)
-    const reputation = Math.max(1, votesReceived * 10 + totalQuestions * 2 + totalAnswers * 5);
+    // Calculate basic reputation with accepted answers bonus
+    let acceptedAnswersCount = 0;
+    try {
+      const [acceptedAnswers] = await dbconnection.query(
+        "SELECT COUNT(*) as acceptedCount FROM answer WHERE userid = ? AND is_accepted = 1",
+        [userid]
+      );
+      acceptedAnswersCount = acceptedAnswers[0]?.acceptedCount || 0;
+      console.log("[getUserProfile] Accepted answers:", acceptedAnswersCount);
+    } catch (error) {
+      console.log("[getUserProfile] is_accepted column not found:", error.message);
+      acceptedAnswersCount = 0;
+    }
+
+    // Reputation formula: votes*10 + questions*2 + answers*5 + accepted_answers*15
+    const reputation = Math.max(1, 
+      votesReceived * 10 + 
+      totalQuestions * 2 + 
+      totalAnswers * 5 + 
+      acceptedAnswersCount * 15
+    );
 
     // Get recent questions (last 5) with error handling
     let recentQuestions = [];
@@ -128,7 +147,8 @@ async function getUserProfile(req, res) {
         totalQuestions: totalQuestions,
         totalAnswers: totalAnswers,
         reputation: reputation,
-        votesReceived: votesReceived
+        votesReceived: votesReceived,
+        acceptedAnswers: acceptedAnswersCount
       },
       recentActivity: {
         questions: recentQuestions,
@@ -252,6 +272,19 @@ async function getMyProfile(req, res) {
 
     const reputation = Math.max(1, votesReceived * 10 + totalQuestions * 2 + totalAnswers * 5);
 
+    // Get accepted answers count
+    let acceptedAnswersCount = 0;
+    try {
+      const [acceptedAnswers] = await dbconnection.query(
+        "SELECT COUNT(*) as acceptedCount FROM answer WHERE userid = ? AND is_accepted = 1",
+        [userid]
+      );
+      acceptedAnswersCount = acceptedAnswers[0]?.acceptedCount || 0;
+    } catch (error) {
+      console.log("[getMyProfile] is_accepted column not found:", error.message);
+      acceptedAnswersCount = 0;
+    }
+
     const profile = {
       user: {
         ...user,
@@ -261,7 +294,8 @@ async function getMyProfile(req, res) {
         totalQuestions: totalQuestions,
         totalAnswers: totalAnswers,
         reputation: reputation,
-        votesReceived: votesReceived
+        votesReceived: votesReceived,
+        acceptedAnswers: acceptedAnswersCount
       }
     };
 

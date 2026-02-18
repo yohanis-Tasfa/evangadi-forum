@@ -51,6 +51,36 @@ function QuestionDetail() {
     }
   }
 
+  // 🔹 Accept answer
+  async function handleAcceptAnswer(answerid) {
+    try {
+      await axios.post(
+        `/answer/accept/${answerid}`,
+        {},
+        { headers: { Authorization: "Bearer " + token } }
+      );
+      fetchAnswers(); // Refresh answers to show updated accepted status
+    } catch (error) {
+      console.error("Error accepting answer:", error);
+      alert(error.response?.data?.msg || "Failed to accept answer");
+    }
+  }
+
+  // 🔹 Unaccept answer
+  async function handleUnacceptAnswer(answerid) {
+    try {
+      await axios.post(
+        `/answer/unaccept/${answerid}`,
+        {},
+        { headers: { Authorization: "Bearer " + token } }
+      );
+      fetchAnswers(); // Refresh answers to show updated accepted status
+    } catch (error) {
+      console.error("Error unaccepting answer:", error);
+      alert(error.response?.data?.msg || "Failed to unaccept answer");
+    }
+  }
+
   // 🔹 Fetch question votes
   async function fetchQuestionVotes() {
     try {
@@ -490,8 +520,23 @@ function QuestionDetail() {
             {answers.map((ans) => (
               <div
                 key={ans.answerid}
-                className="border rounded-md p-4 bg-gray-50 flex gap-4"
+                className={`border rounded-md p-4 flex gap-4 ${
+                  ans.is_accepted 
+                    ? 'bg-green-50 border-green-200 shadow-md' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}
               >
+                {/* Accepted answer indicator */}
+                {ans.is_accepted && (
+                  <div className="absolute -ml-2 -mt-2">
+                    <div className="bg-green-600 text-white rounded-full p-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+
                 {/* Vote buttons for answer */}
                 <VoteButtons
                   voteCount={answerVotes[ans.answerid]?.voteCount || 0}
@@ -500,7 +545,19 @@ function QuestionDetail() {
                   onDownvote={() => handleAnswerVote(ans.answerid, -1)}
                 />
 
-                <div className="flex-1">
+                <div className="flex-1 relative">
+                  {/* Accepted badge */}
+                  {ans.is_accepted && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Accepted Answer
+                      </div>
+                    </div>
+                  )}
+
                   {editingAnswerId === ans.answerid ? (
                   <form onSubmit={handleUpdateAnswer} className="space-y-3">
                     <textarea
@@ -539,24 +596,58 @@ function QuestionDetail() {
                         {ans.username}
                       </strong>
                     </p>
-                    {user && user.userid === ans.userid && (
-                      <div className="flex gap-3 mt-3">
-                        <button
-                          type="button"
-                          onClick={() => startEditAnswer(ans)}
-                          className="px-3 py-1 text-sm bg-yellow-400 text-black rounded-md hover:bg-yellow-500"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAnswer(ans.answerid)}
-                          className="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
+                    
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap gap-3 mt-3">
+                      {/* Question owner can accept/unaccept answers */}
+                      {user && question && user.userid === question.userid && (
+                        <div className="flex gap-2">
+                          {ans.is_accepted ? (
+                            <button
+                              type="button"
+                              onClick={() => handleUnacceptAnswer(ans.answerid)}
+                              className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-1"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              Accepted
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleAcceptAnswer(ans.answerid)}
+                              className="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-green-600 transition flex items-center gap-1"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Accept Answer
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Answer owner can edit/delete */}
+                      {user && user.userid === ans.userid && (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEditAnswer(ans)}
+                            className="px-3 py-1 text-sm bg-yellow-400 text-black rounded-md hover:bg-yellow-500"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAnswer(ans.answerid)}
+                            className="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
                 </div>
